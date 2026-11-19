@@ -241,7 +241,7 @@ textarea{resize:vertical;min-height:75px}
   <div class="brand">Inventory<small>STOCK</small></div>
   <div class="top-right">
     <div class="status"><span class="dot" id="connectionDot"></span><span id="connectionText">Menghubungkan...</span></div>
-    <div class="avatar">I</div>
+    <div class="avatar">BW</div>
   </div>
 </header>
 
@@ -264,14 +264,14 @@ textarea{resize:vertical;min-height:75px}
         <div>
           <div class="eyebrow">INVENTORY MANAGEMENT</div>
           <h1>Overview</h1>
-          <div class="subtitle">Pantau persediaan dan aktivitas inventaris Anda.</div>
+          <div class="subtitle">Pantau persediaan dan aktivitas inventaris.</div>
         </div>
         <button class="btn btn-soft" onclick="loadData()"><i data-lucide="refresh-cw"></i>Refresh</button>
       </div>
 
       <div class="hero">
         <div class="hero-content">
-          <div class="hero-tag">YOUR INVENTORY SPACE</div>
+          <div class="hero-tag">OLIV INVENTORY SPACE</div>
           <h2>Everything in its place.</h2>
           <p>Kelola barang, pantau persediaan, dan catat setiap pergerakan stok dalam satu tempat.</p>
           <div class="hero-date" id="todayText"></div>
@@ -439,7 +439,21 @@ textarea{resize:vertical;min-height:75px}
       <div class="form-grid">
         <div class="field"><label>Tanggal *</label><input id="tTanggal" type="date" required></div>
         <div class="field"><label>Lokasi *</label><select id="tLokasi" required><option value="KK">KK</option><option value="MBS">MBS</option></select></div>
-        <div class="field full"><label>Nama Barang *</label><select id="tBarang" required></select></div>
+        <div class="field full">
+  <label>Nama Barang *</label>
+  <input
+    id="tBarang"
+    type="text"
+    list="daftarBarang"
+    placeholder="Ketik nama barang untuk mencari..."
+    autocomplete="off"
+    required
+  >
+  <datalist id="daftarBarang"></datalist>
+  <small style="color:#93827c;font-size:11px;">
+    Ketik nama atau beberapa huruf awal barang, lalu pilih rekomendasi.
+  </small>
+</div>
         <div class="field"><label id="quantityLabel">Jumlah *</label><input id="tJumlah" type="number" min="1" step="1" required></div>
         <div class="field full"><label>Keterangan</label><textarea id="tKeterangan" placeholder="Keterangan transaksi..."></textarea></div>
       </div>
@@ -762,9 +776,15 @@ function renderTransactions(type) {
 
 function populateItemSelect(selected="") {
   const items = masterRows();
-  $("tBarang").innerHTML = `<option value="">Pilih barang</option>` + items.map(({r}) =>
-    `<option value="${escapeHTML(r[1])}">${escapeHTML(r[1])}</option>`
-  ).join("");
+
+  $("daftarBarang").innerHTML = items.map(({r}) => {
+    const namaBarang = String(r[1] || "").trim();
+
+    return `
+      <option value="${escapeHTML(namaBarang)}"></option>
+    `;
+  }).join("");
+
   $("tBarang").value = selected;
 }
 
@@ -821,31 +841,74 @@ async function removeTransaction(type,row) {
 /* =====================================================
    RIWAYAT
    ===================================================== */
+/* =====================================================
+   RIWAYAT
+   ===================================================== */
 function renderHistory() {
-  const q = $("historySearch").value.toLowerCase();
+  const q = $("historySearch").value.trim().toLowerCase();
   const type = $("historyType").value;
   const loc = $("historyLocation").value;
 
-  const rows = [
+  // Gabungkan data Stok Masuk dan Stok Keluar
+  const allTransactions = [
     ...transactionRows("masuk"),
     ...transactionRows("keluar")
-  ].filter(({r,t}) =>
-    String(r[1]).toLowerCase().includes(q) &&
-    (!type || t === type) &&
-    (!loc || String(r[5]) === loc)
-  ).sort((a,b) => new Date(b.r[0]) - new Date(a.r[0]));
+  ];
 
-  $("historyBody").innerHTML = rows.length ? rows.map(({r,type}) => `
-    <tr>
-      <td>${dateDisplay(r[0])}</td>
-      <td><span class="badge ${type === "masuk" ? "good" : "warn"}">${type === "masuk" ? "Masuk" : "Keluar"}</span></td>
-      <td><strong>${escapeHTML(r[1])}</strong></td>
-      <td>${type === "masuk" ? "+" : "-"}${fmt(r[3])}</td>
-      <td>${escapeHTML(r[5] || "-")}</td>
-      <td>${escapeHTML(r[6] || "-")}</td>
-    </tr>
-  `).join("") : `<tr><td colspan="6" class="empty">Belum ada riwayat transaksi.</td></tr>`;
+  // Filter berdasarkan nama barang, jenis, dan lokasi
+  const rows = allTransactions
+    .filter(({ r, type: transactionType }) => {
+      const namaBarang = String(r[1] || "").toLowerCase();
+      const lokasi = String(r[5] || "").trim();
 
+      return (
+        namaBarang.includes(q) &&
+        (!type || transactionType === type) &&
+        (!loc || lokasi === loc)
+      );
+    })
+
+    // Urutkan tanggal terbaru ke terlama
+    .sort((a, b) => {
+      return new Date(b.r[0]) - new Date(a.r[0]);
+    });
+
+  // Tampilkan hasil
+  $("historyBody").innerHTML = rows.length
+    ? rows.map(({ r, type: transactionType }) => `
+        <tr>
+          <td>${dateDisplay(r[0])}</td>
+
+          <td>
+            <span class="badge ${
+              transactionType === "masuk" ? "good" : "warn"
+            }">
+              ${transactionType === "masuk" ? "Masuk" : "Keluar"}
+            </span>
+          </td>
+
+          <td>
+            <strong>${escapeHTML(r[1])}</strong>
+          </td>
+
+          <td>
+            ${transactionType === "masuk" ? "+" : "-"}${fmt(r[3])}
+          </td>
+
+          <td>${escapeHTML(r[5] || "-")}</td>
+
+          <td>${escapeHTML(r[6] || "-")}</td>
+        </tr>
+      `).join("")
+    : `
+        <tr>
+          <td colspan="6" class="empty">
+            Belum ada riwayat transaksi.
+          </td>
+        </tr>
+      `;
+
+  // Perbarui jumlah transaksi
   $("historyCount").textContent = rows.length + " transaksi";
 }
 
