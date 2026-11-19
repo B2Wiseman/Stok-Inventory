@@ -566,22 +566,66 @@ async function loadData(showMessage=false) {
   if (busy) return;
   busy = true;
   setConnection(false,"Memuat data...");
+
   try {
     const data = await apiGet();
+
     db.master = data.master || [];
     db.masuk = data.stokMasuk || [];
     db.keluar = data.stokKeluar || [];
+
     renderAll();
+
+    lastSuccessfulRefresh = Date.now();
+
     setConnection(true,"Terhubung");
-    if (showMessage) notify("Data berhasil diperbarui.");
+
+    if (showMessage) {
+      notify("Data berhasil diperbarui.");
+    }
+
   } catch (error) {
     console.error(error);
+
     setConnection(false,"Koneksi bermasalah");
-    notify("Tidak dapat mengambil data: " + error.message);
+
+    if (showMessage) {
+      notify("Tidak dapat mengambil data: " + error.message);
+    }
+
   } finally {
     busy = false;
   }
 }
+
+
+/* =========================================
+   AUTO REFRESH DATA SETIAP 2 MENIT
+   ========================================= */
+
+const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000;
+
+let lastSuccessfulRefresh = Date.now();
+
+// Memperbarui data otomatis setiap 2 menit
+setInterval(() => {
+  if (!document.hidden && !busy) {
+    loadData(false);
+  }
+}, AUTO_REFRESH_INTERVAL);
+
+
+// Memperbarui data ketika pengguna kembali
+// ke halaman setelah tab tidak aktif
+document.addEventListener("visibilitychange", () => {
+  if (
+    !document.hidden &&
+    !busy &&
+    Date.now() - lastSuccessfulRefresh >= AUTO_REFRESH_INTERVAL
+  ) {
+    loadData(false);
+  }
+});
 
 /* =====================================================
    NAVIGASI
