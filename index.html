@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -133,9 +134,7 @@ h1{font-family:'Playfair Display',serif;font-size:34px;font-weight:600;margin:5p
 .activity-info span{color:var(--muted);font-size:11px}
 .empty{padding:28px;text-align:center;color:var(--muted);font-size:12px}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:17px;align-items:center}
-.search{
-  min-width:210px;flex:1;position:relative;
-}
+.search{min-width:210px;flex:1;position:relative}
 .search i{position:absolute;left:13px;top:12px;width:16px;color:#a8958b}
 .search input{padding-left:39px;width:100%}
 input,select,textarea{
@@ -154,11 +153,7 @@ tbody tr:hover{background:#fff9f5}
 .product-photo-wrap{position:relative;width:39px;height:39px;flex:0 0 39px}
 .product-photo-wrap .product-img{display:block;cursor:zoom-in}
 .photo-drive-link{position:absolute;right:-5px;bottom:-5px;width:15px;height:15px;border:1px solid white;border-radius:50%;background:#fffdfa;color:#856e63;display:grid;place-items:center;text-decoration:none;box-shadow:0 2px 7px rgba(60,40,30,.16)}
-.photo-drive-link svg{
-  width:11px !important;
-  height:11px !important;
-  stroke-width:2;
-}
+.photo-drive-link svg{width:11px !important;height:11px !important;stroke-width:2}
 .master-data-row{cursor:pointer}
 .master-data-row:hover{background:#fff5ef}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -174,7 +169,6 @@ tbody tr:hover{background:#fff9f5}
 .detail-link{display:inline-flex;align-items:center;gap:7px;color:#946b59;text-decoration:none;font-size:12px;font-weight:600;margin-top:10px}
 .detail-link:hover{text-decoration:underline}
 @media(max-width:520px){.detail-grid{grid-template-columns:1fr}.detail-item.full{grid-column:auto}}
-
 .product-placeholder{width:39px;height:39px;border-radius:11px;background:#f7e8e1;display:grid;place-items:center;color:#bd9280}
 .product-placeholder i{width:17px}
 .badge{
@@ -185,7 +179,7 @@ tbody tr:hover{background:#fff9f5}
 .badge.warn{background:#fbefcf;color:#9b8245}
 .badge.bad{background:#f8e4e2;color:#b66f6b}
 
-/* MULTIPLE CONDITION PICKER - khusus Master Barang */
+/* MULTIPLE CONDITION PICKER */
 .condition-picker{position:relative;width:100%}
 .condition-picker-trigger{
   width:100%;min-height:44px;padding:9px 12px;
@@ -261,6 +255,46 @@ textarea{resize:vertical;min-height:75px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .mobile-menu{display:none}
 .footer{text-align:center;color:#b3a39a;font-size:10px;padding:30px 0 10px}
+
+/* TAMBAHAN: RIWAYAT PERUBAHAN MASTER */
+.history-detail{
+  white-space:normal;
+  min-width:180px;
+  max-width:340px;
+  line-height:1.7;
+  overflow-wrap:anywhere;
+}
+.history-detail-label{
+  color:var(--muted);
+  font-size:10px;
+  display:block;
+  margin-top:5px;
+}
+.history-photo-link{
+  color:#946b59;
+  text-decoration:none;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:4px;
+}
+.history-photo-link:hover{text-decoration:underline}
+.history-delete-btn{
+  width:29px;
+  height:29px;
+  border:0;
+  border-radius:9px;
+  background:#f8e4e2;
+  color:#b66f6b;
+  display:grid;
+  place-items:center;
+}
+.history-delete-btn:hover{background:#f1d2cf}
+.history-delete-btn svg{width:14px;height:14px}
+.history-master-row{background:#fffaf6}
+.history-master-row:hover{background:#fff3ec}
+
 @media(max-width:1000px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .layout{padding:22px 3%}
@@ -321,6 +355,7 @@ textarea{resize:vertical;min-height:75px}
   </aside>
 
   <main class="main">
+
     <!-- OVERVIEW -->
     <section class="page active" id="page-overview">
       <div class="page-head">
@@ -452,16 +487,35 @@ textarea{resize:vertical;min-height:75px}
     <!-- RIWAYAT -->
     <section class="page" id="page-riwayat">
       <div class="page-head">
-        <div><div class="eyebrow">REKAM JEJAK INVENTARIS</div><h1>Riwayat Transaksi</h1><div class="subtitle">Gabungan catatan stok masuk dan stok keluar.</div></div>
+        <div><div class="eyebrow">REKAM JEJAK INVENTARIS</div><h1>Riwayat Transaksi</h1><div class="subtitle">Gabungan catatan stok masuk, stok keluar, dan perubahan Master Barang.</div></div>
       </div>
       <div class="panel">
         <div class="toolbar">
           <div class="search"><i data-lucide="search"></i><input id="historySearch" placeholder="Cari nama barang..." oninput="renderHistory()"></div>
-          <select id="historyType" onchange="renderHistory()"><option value="">Semua Transaksi</option><option value="masuk">Stok Masuk</option><option value="keluar">Stok Keluar</option></select>
-          <select id="historyLocation" onchange="renderHistory()"><option value="">Semua Lokasi</option><option>KK</option><option>MBS</option></select>
+          <select id="historyType" onchange="renderHistory()">
+            <option value="">Semua Transaksi</option>
+            <option value="masuk">Stok Masuk</option>
+            <option value="keluar">Stok Keluar</option>
+            <option value="master">Perubahan Master</option>
+          </select>
+          <select id="historyLocation" onchange="renderHistory()">
+            <option value="">Semua Lokasi</option>
+            <option>KK</option>
+            <option>MBS</option>
+          </select>
         </div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Tanggal</th><th>Jenis</th><th>Nama Barang</th><th>Jumlah</th><th>Lokasi</th><th>Keterangan</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Jenis</th>
+              <th>Nama Barang</th>
+              <th>Jumlah</th>
+              <th>Lokasi</th>
+              <th>Keterangan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
           <tbody id="historyBody"></tbody>
         </table></div>
         <div class="pagination"><span id="historyCount">0 transaksi</span><span>Riwayat gabungan</span></div>
@@ -512,20 +566,13 @@ textarea{resize:vertical;min-height:75px}
         <div class="field"><label>Tanggal *</label><input id="tTanggal" type="date" required></div>
         <div class="field"><label>Lokasi *</label><select id="tLokasi" required><option value="KK">KK</option><option value="MBS">MBS</option></select></div>
         <div class="field full">
-  <label>Nama Barang *</label>
-  <input
-    id="tBarang"
-    type="text"
-    list="daftarBarang"
-    placeholder="Ketik nama barang untuk mencari..."
-    autocomplete="off"
-    required
-  >
-  <datalist id="daftarBarang"></datalist>
-  <small style="color:#93827c;font-size:11px;">
-    Ketik nama atau beberapa huruf awal barang, lalu pilih rekomendasi.
-  </small>
-</div>
+          <label>Nama Barang *</label>
+          <input id="tBarang" type="text" list="daftarBarang" placeholder="Ketik nama barang untuk mencari..." autocomplete="off" required>
+          <datalist id="daftarBarang"></datalist>
+          <small style="color:#93827c;font-size:11px;">
+            Ketik nama atau beberapa huruf awal barang, lalu pilih rekomendasi.
+          </small>
+        </div>
         <div class="field"><label id="quantityLabel">Jumlah *</label><input id="tJumlah" type="number" min="1" step="1" required></div>
         <div class="field full"><label>Keterangan</label><textarea id="tKeterangan" placeholder="Keterangan transaksi..."></textarea></div>
       </div>
@@ -629,6 +676,191 @@ function transactionRows(type) {
 }
 
 /* =====================================================
+   TAMBAHAN: PENYIMPANAN RIWAYAT EDIT MASTER
+   Tidak mengubah Code.gs
+   ===================================================== */
+
+const MASTER_HISTORY_KEY = "inventory_master_edit_history_v1";
+
+// Mengambil riwayat edit dari localStorage.
+function getMasterEditHistory() {
+  try {
+    const data = localStorage.getItem(MASTER_HISTORY_KEY);
+    const parsed = data ? JSON.parse(data) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Gagal membaca riwayat Master:", error);
+    return [];
+  }
+}
+
+// Menyimpan riwayat edit ke localStorage.
+function saveMasterEditHistory(history) {
+  try {
+    localStorage.setItem(MASTER_HISTORY_KEY, JSON.stringify(history));
+    return true;
+  } catch (error) {
+    console.error("Gagal menyimpan riwayat Master:", error);
+    notify("Riwayat tidak dapat disimpan di browser.");
+    return false;
+  }
+}
+
+// Membuat ID unik untuk setiap catatan.
+function createHistoryId() {
+  return "master-" + Date.now() + "-" +
+    Math.random().toString(36).slice(2, 9);
+}
+
+// Membandingkan nilai lama dan baru.
+function normalizeHistoryValue(value) {
+  return String(value ?? "").trim();
+}
+
+// Mencatat perubahan Master hanya jika nilainya benar-benar berubah.
+function recordMasterChanges(oldData, newData, row) {
+  if (!oldData || !newData) return;
+
+  const oldCondition = normalizeHistoryValue(oldData[5]);
+  const newCondition = normalizeHistoryValue(newData.kondisi);
+
+  const oldPhoto = normalizeHistoryValue(oldData[8]);
+  const newPhoto = normalizeHistoryValue(newData.linkFoto);
+
+  const oldDescription = normalizeHistoryValue(oldData[9]);
+  const newDescription = normalizeHistoryValue(newData.keterangan);
+
+  const itemName = String(newData.nama || oldData[1] || "Barang");
+  const now = Date.now();
+
+  const changes = [];
+
+  if (oldCondition !== newCondition) {
+    changes.push({
+      type: "Edit Kondisi",
+      field: "kondisi",
+      oldValue: oldCondition,
+      newValue: newCondition
+    });
+  }
+
+  if (oldPhoto !== newPhoto) {
+    changes.push({
+      type: "Edit Foto",
+      field: "foto",
+      oldValue: oldPhoto,
+      newValue: newPhoto
+    });
+  }
+
+  if (oldDescription !== newDescription) {
+    changes.push({
+      type: "Edit Keterangan",
+      field: "keterangan",
+      oldValue: oldDescription,
+      newValue: newDescription
+    });
+  }
+
+  if (!changes.length) return 0;
+
+  const history = getMasterEditHistory();
+
+  changes.forEach((change, index) => {
+    history.unshift({
+      id: createHistoryId(),
+      timestamp: now + index,
+      date: new Date(now + index).toISOString(),
+      row: Number(row),
+      itemName,
+      type: change.type,
+      field: change.field,
+      oldValue: change.oldValue,
+      newValue: change.newValue
+    });
+  });
+
+  const saved = saveMasterEditHistory(history);
+  return saved ? changes.length : 0;
+}
+
+// Menghapus hanya satu catatan riwayat edit Master.
+function deleteMasterHistory(id) {
+  const history = getMasterEditHistory();
+  const target = history.find(item => item.id === id);
+
+  if (!target) {
+    notify("Riwayat tidak ditemukan.");
+    return;
+  }
+
+  const confirmed = confirm(
+    "Hapus riwayat perubahan Master Barang ini?\n\n" +
+    "Penghapusan hanya berlaku pada catatan riwayat, bukan data Master Barang."
+  );
+
+  if (!confirmed) return;
+
+  const updated = history.filter(item => item.id !== id);
+
+  if (saveMasterEditHistory(updated)) {
+    renderHistory();
+    notify("Riwayat perubahan berhasil dihapus.");
+  }
+}
+
+// Memastikan link yang ditampilkan merupakan link HTTP/HTTPS.
+function safeHistoryUrl(value) {
+  const url = String(value || "").trim();
+
+  if (!/^https?:\/\//i.test(url)) return "";
+
+  return url;
+}
+
+// Menampilkan perbandingan foto lama dan foto baru.
+function historyPhotoDetail(item) {
+  const oldUrl = safeHistoryUrl(item.oldValue);
+  const newUrl = safeHistoryUrl(item.newValue);
+
+  const oldContent = oldUrl
+    ? `<a class="history-photo-link" href="${escapeHTML(oldUrl)}" target="_blank" rel="noopener noreferrer">
+         <i data-lucide="external-link"></i> Buka foto sebelumnya
+       </a>`
+    : `<span>Tidak ada link foto</span>`;
+
+  const newContent = newUrl
+    ? `<a class="history-photo-link" href="${escapeHTML(newUrl)}" target="_blank" rel="noopener noreferrer">
+         <i data-lucide="external-link"></i> Buka foto terbaru
+       </a>`
+    : `<span>Link foto dihapus</span>`;
+
+  return `
+    <div class="history-detail">
+      <span class="history-detail-label">Sebelumnya</span>
+      ${oldContent}
+      <span class="history-detail-label">Perubahan menjadi</span>
+      ${newContent}
+    </div>
+  `;
+}
+
+// Menampilkan detail perubahan kondisi dan keterangan.
+function historyTextDetail(item) {
+  const oldValue = item.oldValue || "-";
+  const newValue = item.newValue || "-";
+
+  return `
+    <div class="history-detail">
+      <span class="history-detail-label">Sebelumnya</span>
+      <div>${escapeHTML(oldValue)}</div>
+      <span class="history-detail-label">Perubahan menjadi</span>
+      <div>${escapeHTML(newValue)}</div>
+    </div>
+  `;
+}
+
+/* =====================================================
    KOMUNIKASI DENGAN APPS SCRIPT
    ===================================================== */
 async function apiGet() {
@@ -676,7 +908,6 @@ async function loadData(showMessage=false) {
 
   } catch (error) {
     console.error(error);
-
     setConnection(false,"Koneksi bermasalah");
 
     if (showMessage) {
@@ -688,25 +919,17 @@ async function loadData(showMessage=false) {
   }
 }
 
-
-/* =========================================
-   AUTO REFRESH DATA SETIAP 2 MENIT
-   ========================================= */
+/* AUTO REFRESH DATA SETIAP 2 MENIT */
 
 const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000;
-
 let lastSuccessfulRefresh = Date.now();
 
-// Memperbarui data otomatis setiap 2 menit
 setInterval(() => {
   if (!document.hidden && !busy) {
     loadData(false);
   }
 }, AUTO_REFRESH_INTERVAL);
 
-
-// Memperbarui data ketika pengguna kembali
-// ke halaman setelah tab tidak aktif
 document.addEventListener("visibilitychange", () => {
   if (
     !document.hidden &&
@@ -725,6 +948,7 @@ function showPage(page) {
   document.querySelectorAll(".nav-btn[data-page]").forEach(el => el.classList.remove("active"));
   $("page-" + page).classList.add("active");
   document.querySelector(`[data-page="${page}"]`).classList.add("active");
+
   if (page === "master") renderMaster();
   if (page === "masuk") renderTransactions("masuk");
   if (page === "keluar") renderTransactions("keluar");
@@ -734,6 +958,7 @@ function showPage(page) {
 document.querySelectorAll(".nav-btn[data-page]").forEach(btn => {
   btn.addEventListener("click", () => showPage(btn.dataset.page));
 });
+
 $("refreshBtn").addEventListener("click", () => loadData(true));
 
 /* =====================================================
@@ -752,6 +977,7 @@ function renderOverview() {
 
   $("labelKK").textContent = fmt(totalKK);
   $("labelMBS").textContent = fmt(totalMBS);
+
   const max = Math.max(totalKK,totalMBS,1);
   $("barKK").style.width = (totalKK/max*100) + "%";
   $("barMBS").style.width = (totalMBS/max*100) + "%";
@@ -777,15 +1003,12 @@ function renderOverview() {
    MASTER BARANG
    ===================================================== */
 function renderCategoryOptions() {
-
-  // Ambil kategori dari data Master Barang
   const categories = [...new Set(
     masterRows()
       .map(x => String(x.r[6] || "").trim())
       .filter(Boolean)
   )].sort((a, b) => a.localeCompare(b, "id"));
 
-  // Dropdown filter kategori
   const select = $("masterCategory");
   const current = select.value;
 
@@ -797,11 +1020,9 @@ function renderCategoryOptions() {
 
   select.value = categories.includes(current) ? current : "";
 
-  // Dropdown kategori pada form tambah/edit
   const modalCategory = $("mKategori");
 
   if (modalCategory) {
-
     const currentModal = modalCategory.value;
 
     const modalCategories = [...new Set([
@@ -818,14 +1039,11 @@ function renderCategoryOptions() {
     modalCategory.value = modalCategories.includes(currentModal)
       ? currentModal
       : "";
-
   }
 
-  // Dropdown filter kondisi
   const conditionSelect = $("masterCondition");
 
   if (conditionSelect) {
-
     const currentCondition = conditionSelect.value;
     const conditions = getConditionOptions();
 
@@ -838,16 +1056,11 @@ function renderCategoryOptions() {
     conditionSelect.value = conditions.includes(currentCondition)
       ? currentCondition
       : "";
-
   }
-
 }
 
-/* =====================================================
-   MULTIPLE CONDITION - MASTER BARANG
-   ===================================================== */
+/* MULTIPLE CONDITION - MASTER BARANG */
 
-// Kondisi standar sesuai daftar pada spreadsheet.
 const DEFAULT_CONDITIONS = [
   "Baik",
   "Rusak Ringan",
@@ -857,7 +1070,6 @@ const DEFAULT_CONDITIONS = [
   "Habis"
 ];
 
-// Pemetaan warna berdasarkan tampilan dropdown Google Sheets.
 const CONDITION_COLORS = {
   "baik": {bg:"#d9f0c9", color:"#397b37"},
   "rusak ringan": {bg:"#ffe3a1", color:"#76520b"},
@@ -867,10 +1079,8 @@ const CONDITION_COLORS = {
   "habis": {bg:"#e7e7e7", color:"#555555"}
 };
 
-// Menyimpan pilihan kondisi yang sedang dipilih pada form.
 let selectedMasterConditions = [];
 
-// Mendukung data lama tunggal dan data baru multi-kondisi.
 function conditionValues(value) {
   return String(value || "")
     .split(/[,;\n]+/)
@@ -878,7 +1088,6 @@ function conditionValues(value) {
     .filter(Boolean);
 }
 
-// Mengambil kondisi standar dan kondisi yang sudah muncul pada data master.
 function getConditionOptions() {
   const usedConditions = masterRows().flatMap(item =>
     conditionValues(item.r[5])
@@ -887,7 +1096,6 @@ function getConditionOptions() {
   return [...new Set([...DEFAULT_CONDITIONS, ...usedConditions])];
 }
 
-// Mengembalikan warna chip. Kondisi baru yang belum dipetakan memakai warna netral.
 function getConditionStyle(condition) {
   const key = String(condition || "").trim().toLowerCase();
   const color = CONDITION_COLORS[key];
@@ -899,12 +1107,10 @@ function getConditionStyle(condition) {
   return "background:#eee9e6;color:#65564f";
 }
 
-// Membuat chip kondisi untuk tampilan form dan tabel.
 function conditionChip(condition) {
   return `<span class="condition-chip" style="${getConditionStyle(condition)}">${escapeHTML(condition)}</span>`;
 }
 
-// Menggambar ulang daftar checkbox kondisi.
 function renderConditionPicker() {
   const menu = $("mKondisiMenu");
   if (!menu) return;
@@ -941,7 +1147,6 @@ function renderConditionPicker() {
   updateConditionSummary();
 }
 
-// Memperbarui ringkasan kondisi terpilih pada tombol dropdown.
 function updateConditionSummary() {
   const summary = $("mKondisiSummary");
   if (!summary) return;
@@ -951,13 +1156,11 @@ function updateConditionSummary() {
     : "Pilih kondisi";
 }
 
-// Mengisi pilihan kondisi saat modal tambah/edit dibuka.
 function setConditionPicker(value) {
   selectedMasterConditions = conditionValues(value);
   renderConditionPicker();
 }
 
-// Membuka/menutup dropdown kondisi.
 $("mKondisiTrigger").addEventListener("click", () => {
   const picker = $("mKondisiPicker");
   const isOpen = picker.classList.toggle("open");
@@ -965,7 +1168,6 @@ $("mKondisiTrigger").addEventListener("click", () => {
   $("mKondisiTrigger").setAttribute("aria-expanded", String(isOpen));
 });
 
-// Menutup dropdown jika pengguna menekan area di luar dropdown.
 document.addEventListener("click", event => {
   const picker = $("mKondisiPicker");
 
@@ -975,7 +1177,6 @@ document.addEventListener("click", event => {
   }
 });
 
-// Badge kondisi pada tabel Master Barang mendukung lebih dari satu kondisi.
 function conditionBadge(condition) {
   const values = conditionValues(condition);
 
@@ -988,6 +1189,7 @@ function conditionBadge(condition) {
 
 function renderMaster() {
   renderCategoryOptions();
+
   const q = $("masterSearch").value.toLowerCase();
   const cat = $("masterCategory").value;
   const cond = $("masterCondition").value;
@@ -1022,6 +1224,7 @@ function openMasterDetail(row) {
   if (!item) return;
 
   const nama = String(item[1] || "");
+
   const latest = [
     ...transactionRows("masuk"),
     ...transactionRows("keluar")
@@ -1031,12 +1234,14 @@ function openMasterDetail(row) {
   const latestNote = latest && String(latest.r[6] || "").trim()
     ? latest.r[6]
     : "Tidak ada keterangan pada transaksi terbaru.";
+
   const latestType = latest ? (latest.type === "masuk" ? "Stok masuk" : "Stok keluar") : "Belum ada transaksi";
   const latestDate = latest ? dateDisplay(latest.r[0]) : "-";
   const photo = driveImage(item[8]);
   const driveLink = String(item[8] || "").trim();
 
   $("detailTitle").textContent = nama || "Detail Barang";
+
   $("masterDetailContent").innerHTML = `
     ${photo ? `<img class="detail-photo" src="${escapeHTML(photo)}" alt="${escapeHTML(nama)}" data-preview-src="${escapeHTML(photo)}" data-preview-name="${escapeHTML(nama)}">` : `<div class="product-placeholder" style="width:100%;height:110px;border-radius:14px"><i data-lucide="package"></i></div>`}
     ${driveLink ? `<a class="detail-link" href="${escapeHTML(driveLink)}" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link"></i>Buka foto asli di Google Drive</a>` : `<div class="panel-sub" style="margin:10px 0">Link foto belum tersedia.</div>`}
@@ -1050,6 +1255,7 @@ function openMasterDetail(row) {
       <div class="detail-item full"><div class="detail-label">Aktivitas Terbaru · ${escapeHTML(latestType)}</div><div class="detail-value">${latest ? `${latest.type === "masuk" ? "Jumlah masuk" : "Jumlah keluar"}: ${fmt(latest.r[3])} · Lokasi: ${escapeHTML(latest.r[5] || "-")}` : "Belum ada transaksi untuk barang ini."}</div><div class="panel-sub" style="margin-top:7px">Tanggal: ${latestDate}</div><div class="detail-value" style="font-weight:400;margin-top:9px">${escapeHTML(latestNote)}</div></div>
       <div class="detail-item full"><div class="detail-label">Keterangan Barang</div><div class="detail-value" style="font-weight:400">${escapeHTML(item[9] || "Belum ada keterangan master.")}</div></div>
     </div>`;
+
   $("masterDetailModal").classList.add("show");
   refreshIcons();
 }
@@ -1066,7 +1272,6 @@ function closePhotoPreview() {
   $("photoLightboxImage").src = "";
 }
 
-// Delegasi klik agar tetap berfungsi setiap kali tabel Master Barang dirender ulang.
 $("masterBody").addEventListener("click", e => {
   const driveLink = e.target.closest(".photo-drive-link");
   if (driveLink) return;
@@ -1079,11 +1284,11 @@ $("masterBody").addEventListener("click", e => {
   }
 
   if (e.target.closest("button")) return;
+
   const row = e.target.closest("tr[data-master-row]");
   if (row) openMasterDetail(row.dataset.masterRow);
 });
 
-// Klik foto dari area detail juga membuka tampilan foto ukuran besar.
 $("masterDetailContent").addEventListener("click", e => {
   const preview = e.target.closest("[data-preview-src]");
   if (preview) previewPhoto(preview.dataset.previewSrc, preview.dataset.previewName || "Foto barang");
@@ -1095,25 +1300,26 @@ document.addEventListener("keydown", e => {
 
 function openMasterModal(row=null) {
   renderCategoryOptions();
+
   $("masterForm").reset();
   $("masterRow").value = "";
   $("masterModalTitle").textContent = row ? "Edit Barang" : "Tambah Barang";
   $("masterSubmit").textContent = row ? "Simpan Perubahan" : "Simpan Barang";
   $("mSaldoKK").value = 0;
   $("mSaldoMBS").value = 0;
+
   renderCategoryOptions();
   $("mKategori").value = "";
-                                    
-                                    
 
-  // Reset kondisi untuk form tambah barang.
   setConditionPicker("Baik");
+
   $("mKondisiPicker").classList.remove("open");
   $("mKondisiTrigger").setAttribute("aria-expanded", "false");
 
   if (row) {
     const r = db.master[row-1];
     if (!r) return;
+
     $("masterRow").value = row;
     $("mNama").value = r[1] || "";
     $("mSatuan").value = r[4] || "pcs";
@@ -1124,14 +1330,28 @@ function openMasterModal(row=null) {
     $("mSaldoKK").value = number(r[10]);
     $("mSaldoMBS").value = number(r[11]);
   }
+
   $("masterModal").classList.add("show");
 }
 
-function editMaster(row) { openMasterModal(row); }
+function editMaster(row) {
+  openMasterModal(row);
+}
+
+/* =====================================================
+   TAMBAHAN: FORM MASTER + CATAT PERUBAHAN
+   ===================================================== */
 
 $("masterForm").addEventListener("submit", async e => {
   e.preventDefault();
+
   const row = $("masterRow").value;
+
+  // Ambil data Master lama sebelum dikirim ke Apps Script.
+  const oldData = row
+    ? db.master[Number(row)-1]
+    : null;
+
   const payload = {
     action:row ? "updateMaster" : "addMaster",
     ...(row ? {row:Number(row)} : {}),
@@ -1144,15 +1364,45 @@ $("masterForm").addEventListener("submit", async e => {
     saldoAwalKK:Number($("mSaldoKK").value)||0,
     saldoAwalMBS:Number($("mSaldoMBS").value)||0
   };
-  await submitAction(payload,"masterSubmit","Menyimpan...");
-  closeModal("masterModal");
+
+  // Simpan ke Apps Script seperti mekanisme sebelumnya.
+  const result = await submitAction(
+    payload,
+    "masterSubmit",
+    "Menyimpan..."
+  );
+
+  // Catat riwayat hanya jika penyimpanan berhasil
+  // dan proses merupakan EDIT, bukan tambah barang baru.
+  if (result && row && oldData) {
+    const totalChanges = recordMasterChanges(
+      oldData,
+      payload,
+      row
+    );
+
+    if (totalChanges > 0) {
+      renderHistory();
+      notify(totalChanges + " perubahan Master dicatat di Riwayat.");
+    }
+  }
+
+  if (result) {
+    closeModal("masterModal");
+  }
 });
 
 async function removeMaster(row) {
   const r = db.master[row-1];
+
   if (!r || !confirm(`Hapus barang "${r[1]}"?\nBarang dengan riwayat transaksi tidak dapat dihapus.`)) return;
+
   const result = await safePost({action:"deleteMaster",row});
-  if (result) { notify("Barang berhasil dihapus."); await loadData(); }
+
+  if (result) {
+    notify("Barang berhasil dihapus.");
+    await loadData();
+  }
 }
 
 /* =====================================================
@@ -1161,12 +1411,14 @@ async function removeMaster(row) {
 function renderTransactions(type) {
   const search = $(type + "Search").value.toLowerCase();
   const location = $(type + "Location").value;
+
   const rows = transactionRows(type).filter(({r}) =>
     String(r[1]).toLowerCase().includes(search) &&
     (!location || String(r[5]) === location)
   ).sort((a,b) => new Date(b.r[0]) - new Date(a.r[0]));
 
   const body = $(type + "Body");
+
   body.innerHTML = rows.length ? rows.map(({r,row}) => `
     <tr>
       <td>${dateDisplay(r[0])}</td>
@@ -1192,9 +1444,7 @@ function populateItemSelect(selected="") {
   $("daftarBarang").innerHTML = items.map(({r}) => {
     const namaBarang = String(r[1] || "").trim();
 
-    return `
-      <option value="${escapeHTML(namaBarang)}"></option>
-    `;
+    return `<option value="${escapeHTML(namaBarang)}"></option>`;
   }).join("");
 
   $("tBarang").value = selected;
@@ -1204,15 +1454,28 @@ function openTransactionModal(type,row=null) {
   $("transactionForm").reset();
   $("transactionType").value = type;
   $("transactionRow").value = "";
-  $("transactionModalTitle").textContent = row ? "Edit Transaksi" : (type === "masuk" ? "Tambah Stok Masuk" : "Tambah Stok Keluar");
-  $("quantityLabel").textContent = type === "masuk" ? "Jumlah Masuk *" : "Jumlah Keluar *";
-  $("transactionSubmit").textContent = row ? "Simpan Perubahan" : "Simpan Transaksi";
+
+  $("transactionModalTitle").textContent = row
+    ? "Edit Transaksi"
+    : (type === "masuk" ? "Tambah Stok Masuk" : "Tambah Stok Keluar");
+
+  $("quantityLabel").textContent = type === "masuk"
+    ? "Jumlah Masuk *"
+    : "Jumlah Keluar *";
+
+  $("transactionSubmit").textContent = row
+    ? "Simpan Perubahan"
+    : "Simpan Transaksi";
+
   $("tTanggal").value = new Date().toISOString().slice(0,10);
+
   populateItemSelect();
 
   if (row) {
     const data = (type === "masuk" ? db.masuk : db.keluar)[row-1];
+
     if (!data) return;
+
     $("transactionRow").value = row;
     $("tTanggal").value = dateISO(data[0]);
     $("tBarang").value = data[1] || "";
@@ -1220,15 +1483,20 @@ function openTransactionModal(type,row=null) {
     $("tLokasi").value = data[5] || "KK";
     $("tKeterangan").value = data[6] || "";
   }
+
   $("transactionModal").classList.add("show");
 }
 
-function editTransaction(type,row) { openTransactionModal(type,row); }
+function editTransaction(type,row) {
+  openTransactionModal(type,row);
+}
 
 $("transactionForm").addEventListener("submit", async e => {
   e.preventDefault();
+
   const type = $("transactionType").value;
   const row = $("transactionRow").value;
+
   const payload = {
     action:row ? "updateTransaction" : "addTransaction",
     type,
@@ -1239,94 +1507,185 @@ $("transactionForm").addEventListener("submit", async e => {
     lokasi:$("tLokasi").value,
     keterangan:$("tKeterangan").value.trim()
   };
-  const result = await submitAction(payload,"transactionSubmit","Menyimpan...");
+
+  const result = await submitAction(
+    payload,
+    "transactionSubmit",
+    "Menyimpan..."
+  );
+
   if (result) closeModal("transactionModal");
 });
 
 async function removeTransaction(type,row) {
   const data = (type === "masuk" ? db.masuk : db.keluar)[row-1];
+
   if (!data || !confirm(`Hapus transaksi ${data[1]} tanggal ${dateDisplay(data[0])}?`)) return;
+
   const result = await safePost({action:"deleteTransaction",type,row});
-  if (result) { notify("Transaksi berhasil dihapus."); await loadData(); }
+
+  if (result) {
+    notify("Transaksi berhasil dihapus.");
+    await loadData();
+  }
 }
 
 /* =====================================================
-   RIWAYAT
+   RIWAYAT GABUNGAN
    ===================================================== */
-/* =====================================================
-   RIWAYAT
-   ===================================================== */
+
 function renderHistory() {
   const q = $("historySearch").value.trim().toLowerCase();
   const type = $("historyType").value;
   const loc = $("historyLocation").value;
 
-  // Gabungkan data Stok Masuk dan Stok Keluar
-  const allTransactions = [
+  // Data transaksi asli dari Google Spreadsheet.
+  const transactionHistory = [
     ...transactionRows("masuk"),
     ...transactionRows("keluar")
+  ].map(item => ({
+    source: "transaction",
+    type: item.type,
+    r: item.r,
+    row: item.row,
+    timestamp: new Date(item.r[0]).getTime() || 0
+  }));
+
+  // Data perubahan Master dari localStorage.
+  const masterHistory = getMasterEditHistory().map(item => ({
+    source: "master",
+    type: "master",
+    item,
+    timestamp: Number(item.timestamp) || 0
+  }));
+
+  // Gabungkan transaksi dan perubahan Master.
+  const allHistory = [
+    ...transactionHistory,
+    ...masterHistory
   ];
 
-  // Filter berdasarkan nama barang, jenis, dan lokasi
-  const rows = allTransactions
-    .filter(({ r, type: transactionType }) => {
-      const namaBarang = String(r[1] || "").toLowerCase();
-      const lokasi = String(r[5] || "").trim();
+  // Filter berdasarkan pencarian, jenis, dan lokasi.
+  const rows = allHistory
+    .filter(item => {
+      const namaBarang = item.source === "master"
+        ? String(item.item.itemName || "").toLowerCase()
+        : String(item.r[1] || "").toLowerCase();
+
+      const itemType = item.source === "master"
+        ? "master"
+        : item.type;
+
+      const lokasi = item.source === "master"
+        ? ""
+        : String(item.r[5] || "").trim();
 
       return (
         namaBarang.includes(q) &&
-        (!type || transactionType === type) &&
+        (!type || itemType === type) &&
         (!loc || lokasi === loc)
       );
     })
 
-    // Urutkan tanggal terbaru ke terlama
-    .sort((a, b) => {
-      return new Date(b.r[0]) - new Date(a.r[0]);
-    });
+    // Urutkan berdasarkan waktu terbaru.
+    .sort((a,b) => b.timestamp - a.timestamp);
 
-  // Tampilkan hasil
   $("historyBody").innerHTML = rows.length
-    ? rows.map(({ r, type: transactionType }) => `
-        <tr>
-          <td>${dateDisplay(r[0])}</td>
+    ? rows.map(item => {
 
-          <td>
-            <span class="badge ${
-              transactionType === "masuk" ? "good" : "warn"
-            }">
-              ${transactionType === "masuk" ? "Masuk" : "Keluar"}
-            </span>
-          </td>
+        // RIWAYAT EDIT MASTER BARANG
+        if (item.source === "master") {
+          const history = item.item;
 
-          <td>
-            <strong>${escapeHTML(r[1])}</strong>
-          </td>
+          const detail = history.field === "foto"
+            ? historyPhotoDetail(history)
+            : historyTextDetail(history);
 
-          <td>
-            ${transactionType === "masuk" ? "+" : "-"}${fmt(r[3])}
-          </td>
+          return `
+            <tr class="history-master-row">
+              <td>${dateDisplay(history.date)}</td>
 
-          <td>${escapeHTML(r[5] || "-")}</td>
+              <td>
+                <span class="badge" style="background:#f3e4f1;color:#8b6688">
+                  ${escapeHTML(history.type)}
+                </span>
+              </td>
 
-          <td>${escapeHTML(r[6] || "-")}</td>
-        </tr>
-      `).join("")
+              <td>
+                <strong>${escapeHTML(history.itemName)}</strong>
+              </td>
+
+              <td>-</td>
+
+              <td>-</td>
+
+              <td>${detail}</td>
+
+              <td>
+                <button
+                  class="history-delete-btn"
+                  title="Hapus riwayat perubahan"
+                  aria-label="Hapus riwayat perubahan"
+                  onclick="deleteMasterHistory('${escapeHTML(history.id)}')">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+
+        // RIWAYAT TRANSAKSI STOK MASUK / KELUAR.
+        // Tidak menyediakan tombol hapus.
+        const r = item.r;
+        const transactionType = item.type;
+
+        return `
+          <tr>
+            <td>${dateDisplay(r[0])}</td>
+
+            <td>
+              <span class="badge ${
+                transactionType === "masuk" ? "good" : "warn"
+              }">
+                ${transactionType === "masuk" ? "Masuk" : "Keluar"}
+              </span>
+            </td>
+
+            <td>
+              <strong>${escapeHTML(r[1])}</strong>
+            </td>
+
+            <td>
+              ${transactionType === "masuk" ? "+" : "-"}${fmt(r[3])}
+            </td>
+
+            <td>${escapeHTML(r[5] || "-")}</td>
+
+            <td>${escapeHTML(r[6] || "-")}</td>
+
+            <td>
+              <span class="panel-sub">-</span>
+            </td>
+          </tr>
+        `;
+      }).join("")
     : `
         <tr>
-          <td colspan="6" class="empty">
+          <td colspan="7" class="empty">
             Belum ada riwayat transaksi.
           </td>
         </tr>
       `;
 
-  // Perbarui jumlah transaksi
-  $("historyCount").textContent = rows.length + " transaksi";
+  $("historyCount").textContent = rows.length + " riwayat";
+
+  refreshIcons();
 }
 
 /* =====================================================
    SIMPAN DATA DAN REFRESH
    ===================================================== */
+
 async function safePost(payload) {
   try {
     const result = await apiPost(payload);
@@ -1342,17 +1701,24 @@ async function safePost(payload) {
 async function submitAction(payload,buttonId,loadingText) {
   const button = $(buttonId);
   const original = button.textContent;
+
   button.disabled = true;
   button.textContent = loadingText;
+
   try {
     const result = await apiPost(payload);
+
     notify(result.message || "Data berhasil disimpan.");
+
     await loadData();
+
     return result;
+
   } catch (error) {
     console.error(error);
     notify("Gagal menyimpan: " + error.message);
     return null;
+
   } finally {
     button.disabled = false;
     button.textContent = original;
@@ -1368,7 +1734,9 @@ function renderAll() {
   refreshIcons();
 }
 
-function closeModal(id) { $(id).classList.remove("show"); }
+function closeModal(id) {
+  $(id).classList.remove("show");
+}
 
 document.querySelectorAll(".modal-backdrop").forEach(el => {
   el.addEventListener("click", e => {
@@ -1383,11 +1751,17 @@ function refreshIcons() {
 /* =====================================================
    INISIALISASI
    ===================================================== */
+
 $("todayText").textContent = new Date().toLocaleDateString("id-ID", {
-  weekday:"long",day:"numeric",month:"long",year:"numeric"
+  weekday:"long",
+  day:"numeric",
+  month:"long",
+  year:"numeric"
 });
+
 refreshIcons();
 loadData();
+
 </script>
 </body>
 </html>
