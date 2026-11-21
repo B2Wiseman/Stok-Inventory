@@ -185,6 +185,46 @@ tbody tr:hover{background:#fff9f5}
 .badge.good{background:#eaf1e7;color:#68866b}
 .badge.warn{background:#fbefcf;color:#9b8245}
 .badge.bad{background:#f8e4e2;color:#b66f6b}
+
+/* MULTIPLE CONDITION PICKER - khusus Master Barang */
+.condition-picker{position:relative;width:100%}
+.condition-picker-trigger{
+  width:100%;min-height:44px;padding:9px 12px;
+  border:1px solid var(--line);border-radius:11px;
+  background:#fffdfa;color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;text-align:left;cursor:pointer;
+}
+.condition-picker-trigger:focus{
+  outline:none;border-color:#e4aaa5;
+  box-shadow:0 0 0 3px rgba(228,170,165,.15);
+}
+.condition-arrow{font-size:19px;line-height:1;color:var(--muted);flex:0 0 auto}
+.condition-picker-menu{
+  display:none;position:absolute;top:calc(100% + 5px);
+  left:0;right:0;z-index:60;max-height:230px;overflow-y:auto;
+  padding:6px;background:#fff;border:1px solid var(--line);
+  border-radius:11px;box-shadow:0 10px 25px rgba(60,40,30,.14);
+}
+.condition-picker.open .condition-picker-menu{display:block}
+.condition-option{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 8px;border-radius:8px;cursor:pointer;
+}
+.condition-option:hover{background:#faf4ef}
+.condition-option input{
+  width:14px;height:14px;margin:0;accent-color:#80665b;flex:0 0 auto;
+}
+.condition-chip{
+  display:inline-flex;align-items:center;border-radius:8px;
+  padding:4px 8px;font-size:11px;font-weight:600;
+  line-height:1.2;white-space:nowrap;
+}
+.condition-summary{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.condition-option-text{
+  display:inline-flex;align-items:center;border-radius:8px;
+  padding:4px 8px;font-size:11px;font-weight:600;
+}
 .actions{display:flex;gap:5px}
 .icon-btn{width:30px;height:30px;border:0;border-radius:9px;background:#f8eee8;color:#856e63;display:grid;place-items:center}
 .icon-btn:hover{background:#f1dcd3}
@@ -359,7 +399,7 @@ textarea{resize:vertical;min-height:75px}
           <div class="search"><i data-lucide="search"></i><input id="masterSearch" placeholder="Cari nama barang..." oninput="renderMaster()"></div>
           <select id="masterCategory" onchange="renderMaster()"><option value="">Semua Kategori</option></select>
           <select id="masterCondition" onchange="renderMaster()">
-            <option value="">Semua Kondisi</option><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option>
+            <option value="">Semua Kondisi</option>
           </select>
         </div>
         <div class="table-wrap">
@@ -441,7 +481,16 @@ textarea{resize:vertical;min-height:75px}
       <div class="form-grid">
         <div class="field full"><label>Nama Barang *</label><input id="mNama" required placeholder="Masukkan nama barang"></div>
         <div class="field"><label>Satuan</label><select id="mSatuan"><option>pcs</option><option>set</option><option>unit</option><option>roll</option><option>lembar</option><option>box</option></select></div>
-        <div class="field"><label>Kondisi</label><select id="mKondisi"><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></div>
+        <div class="field">
+          <label>Kondisi</label>
+          <div class="condition-picker" id="mKondisiPicker">
+            <button type="button" class="condition-picker-trigger" id="mKondisiTrigger" aria-expanded="false">
+              <span id="mKondisiSummary">Pilih kondisi</span>
+              <span class="condition-arrow">⌄</span>
+            </button>
+            <div class="condition-picker-menu" id="mKondisiMenu"></div>
+          </div>
+        </div>
         <div class="field"><label>Kategori</label><input id="mKategori" placeholder="Contoh: elektronik"></div>
         <div class="field"><label>Link Foto Google Drive</label><input id="mFoto" placeholder="https://drive.google.com/..."></div>
         <div class="field"><label>Saldo Awal KK</label><input id="mSaldoKK" type="number" min="0" value="0"></div>
@@ -736,14 +785,162 @@ function renderCategoryOptions() {
     `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`
   ).join("");
   select.value = current;
+
+  // Daftar filter kondisi mengikuti nilai yang tersedia di data Master Barang.
+  const conditionSelect = $("masterCondition");
+  const currentCondition = conditionSelect.value;
+  const conditions = getConditionOptions();
+
+  conditionSelect.innerHTML =
+    `<option value="">Semua Kondisi</option>` +
+    conditions.map(c =>
+      `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`
+    ).join("");
+
+  conditionSelect.value = conditions.includes(currentCondition) ? currentCondition : "";
 }
 
+/* =====================================================
+   MULTIPLE CONDITION - MASTER BARANG
+   ===================================================== */
+
+// Kondisi standar sesuai daftar pada spreadsheet.
+const DEFAULT_CONDITIONS = [
+  "Baik",
+  "Rusak Ringan",
+  "Rusak Berat",
+  "Hilang",
+  "Sedang Perbaikan",
+  "Habis"
+];
+
+// Pemetaan warna berdasarkan tampilan dropdown Google Sheets.
+const CONDITION_COLORS = {
+  "baik": {bg:"#d9f0c9", color:"#397b37"},
+  "rusak ringan": {bg:"#ffe3a1", color:"#76520b"},
+  "rusak berat": {bg:"#c90000", color:"#ffffff"},
+  "hilang": {bg:"#ffc5c5", color:"#b34b4b"},
+  "sedang perbaikan": {bg:"#b9dcf8", color:"#2869a6"},
+  "habis": {bg:"#e7e7e7", color:"#555555"}
+};
+
+// Menyimpan pilihan kondisi yang sedang dipilih pada form.
+let selectedMasterConditions = [];
+
+// Mendukung data lama tunggal dan data baru multi-kondisi.
+function conditionValues(value) {
+  return String(value || "")
+    .split(/[,;\\n]+/)
+    .map(value => value.trim())
+    .filter(Boolean);
+}
+
+// Mengambil kondisi standar dan kondisi yang sudah muncul pada data master.
+function getConditionOptions() {
+  const usedConditions = masterRows().flatMap(item =>
+    conditionValues(item.r[5])
+  );
+
+  return [...new Set([...DEFAULT_CONDITIONS, ...usedConditions])];
+}
+
+// Mengembalikan warna chip. Kondisi baru yang belum dipetakan memakai warna netral.
+function getConditionStyle(condition) {
+  const key = String(condition || "").trim().toLowerCase();
+  const color = CONDITION_COLORS[key];
+
+  if (color) {
+    return `background:${color.bg};color:${color.color}`;
+  }
+
+  return "background:#eee9e6;color:#65564f";
+}
+
+// Membuat chip kondisi untuk tampilan form dan tabel.
+function conditionChip(condition) {
+  return `<span class="condition-chip" style="${getConditionStyle(condition)}">${escapeHTML(condition)}</span>`;
+}
+
+// Menggambar ulang daftar checkbox kondisi.
+function renderConditionPicker() {
+  const menu = $("mKondisiMenu");
+  if (!menu) return;
+
+  const options = getConditionOptions();
+
+  menu.innerHTML = options.map(condition => `
+    <label class="condition-option">
+      <input type="checkbox"
+        value="${escapeHTML(condition)}"
+        ${selectedMasterConditions.includes(condition) ? "checked" : ""}>
+      <span class="condition-option-text" style="${getConditionStyle(condition)}">
+        ${escapeHTML(condition)}
+      </span>
+    </label>
+  `).join("");
+
+  menu.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.addEventListener("change", () => {
+      const value = input.value;
+
+      if (input.checked) {
+        if (!selectedMasterConditions.includes(value)) {
+          selectedMasterConditions.push(value);
+        }
+      } else {
+        selectedMasterConditions = selectedMasterConditions.filter(item => item !== value);
+      }
+
+      updateConditionSummary();
+    });
+  });
+
+  updateConditionSummary();
+}
+
+// Memperbarui ringkasan kondisi terpilih pada tombol dropdown.
+function updateConditionSummary() {
+  const summary = $("mKondisiSummary");
+  if (!summary) return;
+
+  summary.innerHTML = selectedMasterConditions.length
+    ? `<span class="condition-summary">${selectedMasterConditions.map(conditionChip).join("")}</span>`
+    : "Pilih kondisi";
+}
+
+// Mengisi pilihan kondisi saat modal tambah/edit dibuka.
+function setConditionPicker(value) {
+  selectedMasterConditions = conditionValues(value);
+  renderConditionPicker();
+}
+
+// Membuka/menutup dropdown kondisi.
+$("mKondisiTrigger").addEventListener("click", () => {
+  const picker = $("mKondisiPicker");
+  const isOpen = picker.classList.toggle("open");
+
+  $("mKondisiTrigger").setAttribute("aria-expanded", String(isOpen));
+});
+
+// Menutup dropdown jika pengguna menekan area di luar dropdown.
+document.addEventListener("click", event => {
+  const picker = $("mKondisiPicker");
+
+  if (picker && !picker.contains(event.target)) {
+    picker.classList.remove("open");
+    $("mKondisiTrigger").setAttribute("aria-expanded", "false");
+  }
+});
+
+// Badge kondisi pada tabel Master Barang mendukung lebih dari satu kondisi.
 function conditionBadge(condition) {
-  const c = String(condition || "");
-  let cls = "good";
-  if (c.toLowerCase().includes("ringan")) cls = "warn";
-  if (c.toLowerCase().includes("berat")) cls = "bad";
-  return `<span class="badge ${cls}">${escapeHTML(c || "-")}</span>`;
+  const values = conditionValues(condition);
+
+  if (!values.length) {
+    return `<span class="badge">-</span>`;
+  }
+
+  return `<span style="display:inline-flex;flex-wrap:wrap;gap:4px">${values.map(conditionChip).join("")}</span>`;
 }
 
 function renderMaster() {
@@ -755,7 +952,7 @@ function renderMaster() {
   const rows = masterRows().filter(({r}) =>
     String(r[1]).toLowerCase().includes(q) &&
     (!cat || String(r[6]) === cat) &&
-    (!cond || String(r[5]) === cond)
+    (!cond || conditionValues(r[5]).includes(cond))
   );
 
   $("masterBody").innerHTML = rows.length ? rows.map(({r,row}) => `
@@ -803,7 +1000,7 @@ function openMasterDetail(row) {
     <div class="detail-grid" style="margin-top:16px">
       <div class="detail-item"><div class="detail-label">ID Barang</div><div class="detail-value">#${escapeHTML(item[0] || "-")}</div></div>
       <div class="detail-item"><div class="detail-label">Kategori</div><div class="detail-value">${escapeHTML(item[6] || "-")}</div></div>
-      <div class="detail-item"><div class="detail-label">Kondisi</div><div class="detail-value">${escapeHTML(item[5] || "-")}</div></div>
+      <div class="detail-item"><div class="detail-label">Kondisi</div><div class="detail-value">${conditionBadge(item[5])}</div></div>
       <div class="detail-item"><div class="detail-label">Satuan</div><div class="detail-value">${escapeHTML(item[4] || "-")}</div></div>
       <div class="detail-item"><div class="detail-label">Stok KK</div><div class="detail-value">${fmt(item[2])}</div></div>
       <div class="detail-item"><div class="detail-label">Stok MBS</div><div class="detail-value">${fmt(item[3])}</div></div>
@@ -861,13 +1058,18 @@ function openMasterModal(row=null) {
   $("mSaldoKK").value = 0;
   $("mSaldoMBS").value = 0;
 
+  // Reset kondisi untuk form tambah barang.
+  setConditionPicker("Baik");
+  $("mKondisiPicker").classList.remove("open");
+  $("mKondisiTrigger").setAttribute("aria-expanded", "false");
+
   if (row) {
     const r = db.master[row-1];
     if (!r) return;
     $("masterRow").value = row;
     $("mNama").value = r[1] || "";
     $("mSatuan").value = r[4] || "pcs";
-    $("mKondisi").value = r[5] || "Baik";
+    setConditionPicker(r[5] || "Baik");
     $("mKategori").value = r[6] || "";
     $("mFoto").value = r[8] || "";
     $("mKeterangan").value = r[9] || "";
@@ -887,7 +1089,7 @@ $("masterForm").addEventListener("submit", async e => {
     ...(row ? {row:Number(row)} : {}),
     nama:$("mNama").value.trim(),
     satuan:$("mSatuan").value,
-    kondisi:$("mKondisi").value,
+    kondisi:selectedMasterConditions.join(", "),
     kategori:$("mKategori").value.trim(),
     linkFoto:$("mFoto").value.trim(),
     keterangan:$("mKeterangan").value.trim(),
