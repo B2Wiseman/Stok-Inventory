@@ -152,6 +152,26 @@ td{padding:12px;border-bottom:1px solid #f5eee9;font-size:12px}
 tbody tr:hover{background:#fff9f5}
 .product-cell{display:flex;align-items:center;gap:10px}
 .product-img{width:39px;height:39px;border-radius:11px;background:#f7e8e1;object-fit:cover}
+.product-photo-wrap{position:relative;width:39px;height:39px;flex:0 0 39px}
+.product-photo-wrap .product-img{display:block;cursor:zoom-in}
+.photo-drive-link{position:absolute;right:-5px;bottom:-5px;width:19px;height:19px;border:1px solid white;border-radius:50%;background:#fffdfa;color:#856e63;display:grid;place-items:center;text-decoration:none;box-shadow:0 2px 7px rgba(60,40,30,.16)}
+.photo-drive-link i{width:11px;height:11px}
+.master-data-row{cursor:pointer}
+.master-data-row:hover{background:#fff5ef}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.detail-item{padding:12px;border:1px solid var(--line);border-radius:12px;background:#fffaf6;min-width:0}
+.detail-item.full{grid-column:1/-1}
+.detail-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+.detail-value{font-size:13px;font-weight:600;overflow-wrap:anywhere;white-space:pre-wrap}
+.detail-photo{width:100%;max-height:260px;object-fit:contain;border-radius:14px;background:#f8eee8;cursor:zoom-in}
+.photo-lightbox{position:fixed;inset:0;z-index:80;background:rgba(28,20,18,.88);display:none;align-items:center;justify-content:center;padding:24px}
+.photo-lightbox.show{display:flex}
+.photo-lightbox img{max-width:min(94vw,1100px);max-height:86vh;object-fit:contain;border-radius:12px}
+.photo-lightbox .close{position:absolute;top:18px;right:18px;background:#fff;color:#392e2b}
+.detail-link{display:inline-flex;align-items:center;gap:7px;color:#946b59;text-decoration:none;font-size:12px;font-weight:600;margin-top:10px}
+.detail-link:hover{text-decoration:underline}
+@media(max-width:520px){.detail-grid{grid-template-columns:1fr}.detail-item.full{grid-column:auto}}
+
 .product-placeholder{width:39px;height:39px;border-radius:11px;background:#f7e8e1;display:grid;place-items:center;color:#bd9280}
 .product-placeholder i{width:17px}
 .badge{
@@ -462,6 +482,21 @@ textarea{resize:vertical;min-height:75px}
   </div>
 </div>
 
+<!-- MODAL DETAIL BARANG -->
+<div class="modal-backdrop" id="masterDetailModal">
+  <div class="modal">
+    <div class="modal-head"><h2 id="detailTitle">Detail Barang</h2><button class="close" onclick="closeModal('masterDetailModal')"><i data-lucide="x"></i></button></div>
+    <div id="masterDetailContent"></div>
+    <div class="modal-foot"><button type="button" class="btn btn-soft" onclick="closeModal('masterDetailModal')">Tutup</button></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX FOTO BARANG -->
+<div class="photo-lightbox" id="photoLightbox" onclick="if(event.target===this)closePhotoPreview()">
+  <button class="close" onclick="closePhotoPreview()" aria-label="Tutup foto"><i data-lucide="x"></i></button>
+  <img id="photoLightboxImage" src="" alt="Foto barang diperbesar">
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -524,7 +559,10 @@ function driveImage(url) {
 function photoHTML(url, name) {
   const src = driveImage(url);
   if (src) {
-    return `<img class="product-img" src="${escapeHTML(src)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;product-placeholder&quot;><i data-lucide=&quot;package&quot;></i></span>'">`;
+    return `<span class="product-photo-wrap">
+      <img class="product-img" src="${escapeHTML(src)}" alt="${escapeHTML(name)}" loading="lazy" data-preview-src="${escapeHTML(src)}" data-preview-name="${escapeHTML(name)}" onerror="this.outerHTML='<span class=&quot;product-placeholder&quot;><i data-lucide=&quot;package&quot;></i></span>'">
+      <a class="photo-drive-link" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer" title="Buka foto di Google Drive" aria-label="Buka foto di Google Drive" onclick="event.stopPropagation()"><i data-lucide="external-link"></i></a>
+    </span>`;
   }
   return `<span class="product-placeholder"><i data-lucide="package"></i></span>`;
 }
@@ -717,7 +755,7 @@ function renderMaster() {
   );
 
   $("masterBody").innerHTML = rows.length ? rows.map(({r,row}) => `
-    <tr>
+    <tr class="master-data-row" data-master-row="${row}" title="Klik untuk melihat detail barang">
       <td><div class="product-cell">${photoHTML(r[8],r[1])}<div><strong>${escapeHTML(r[1])}</strong><div class="panel-sub">#${escapeHTML(r[0])}</div></div></div></td>
       <td>${escapeHTML(r[6] || "-")}</td>
       <td>${conditionBadge(r[5])}</td>
@@ -734,6 +772,82 @@ function renderMaster() {
   $("masterCount").textContent = rows.length + " barang";
   refreshIcons();
 }
+
+function openMasterDetail(row) {
+  const item = db.master[Number(row)-1];
+  if (!item) return;
+
+  const nama = String(item[1] || "");
+  const latest = [
+    ...transactionRows("masuk"),
+    ...transactionRows("keluar")
+  ].filter(x => String(x.r[1] || "").trim().toLowerCase() === nama.trim().toLowerCase())
+   .sort((a,b) => new Date(b.r[0]) - new Date(a.r[0]))[0];
+
+  const latestNote = latest && String(latest.r[6] || "").trim()
+    ? latest.r[6]
+    : "Tidak ada keterangan pada transaksi terbaru.";
+  const latestType = latest ? (latest.type === "masuk" ? "Stok masuk" : "Stok keluar") : "Belum ada transaksi";
+  const latestDate = latest ? dateDisplay(latest.r[0]) : "-";
+  const photo = driveImage(item[8]);
+  const driveLink = String(item[8] || "").trim();
+
+  $("detailTitle").textContent = nama || "Detail Barang";
+  $("masterDetailContent").innerHTML = `
+    ${photo ? `<img class="detail-photo" src="${escapeHTML(photo)}" alt="${escapeHTML(nama)}" data-preview-src="${escapeHTML(photo)}" data-preview-name="${escapeHTML(nama)}">` : `<div class="product-placeholder" style="width:100%;height:110px;border-radius:14px"><i data-lucide="package"></i></div>`}
+    ${driveLink ? `<a class="detail-link" href="${escapeHTML(driveLink)}" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link"></i>Buka foto asli di Google Drive</a>` : `<div class="panel-sub" style="margin:10px 0">Link foto belum tersedia.</div>`}
+    <div class="detail-grid" style="margin-top:16px">
+      <div class="detail-item"><div class="detail-label">ID Barang</div><div class="detail-value">#${escapeHTML(item[0] || "-")}</div></div>
+      <div class="detail-item"><div class="detail-label">Kategori</div><div class="detail-value">${escapeHTML(item[6] || "-")}</div></div>
+      <div class="detail-item"><div class="detail-label">Kondisi</div><div class="detail-value">${escapeHTML(item[5] || "-")}</div></div>
+      <div class="detail-item"><div class="detail-label">Satuan</div><div class="detail-value">${escapeHTML(item[4] || "-")}</div></div>
+      <div class="detail-item"><div class="detail-label">Stok KK</div><div class="detail-value">${fmt(item[2])}</div></div>
+      <div class="detail-item"><div class="detail-label">Stok MBS</div><div class="detail-value">${fmt(item[3])}</div></div>
+      <div class="detail-item full"><div class="detail-label">Aktivitas Terbaru · ${escapeHTML(latestType)}</div><div class="detail-value">${latest ? `${latest.type === "masuk" ? "Jumlah masuk" : "Jumlah keluar"}: ${fmt(latest.r[3])} · Lokasi: ${escapeHTML(latest.r[5] || "-")}` : "Belum ada transaksi untuk barang ini."}</div><div class="panel-sub" style="margin-top:7px">Tanggal: ${latestDate}</div><div class="detail-value" style="font-weight:400;margin-top:9px">${escapeHTML(latestNote)}</div></div>
+      <div class="detail-item full"><div class="detail-label">Keterangan Barang</div><div class="detail-value" style="font-weight:400">${escapeHTML(item[9] || "Belum ada keterangan master.")}</div></div>
+    </div>`;
+  $("masterDetailModal").classList.add("show");
+  refreshIcons();
+}
+
+function previewPhoto(src, name="Foto barang") {
+  if (!src) return;
+  $("photoLightboxImage").src = src;
+  $("photoLightboxImage").alt = name;
+  $("photoLightbox").classList.add("show");
+}
+
+function closePhotoPreview() {
+  $("photoLightbox").classList.remove("show");
+  $("photoLightboxImage").src = "";
+}
+
+// Delegasi klik agar tetap berfungsi setiap kali tabel Master Barang dirender ulang.
+$("masterBody").addEventListener("click", e => {
+  const driveLink = e.target.closest(".photo-drive-link");
+  if (driveLink) return;
+
+  const preview = e.target.closest("[data-preview-src]");
+  if (preview) {
+    e.stopPropagation();
+    previewPhoto(preview.dataset.previewSrc, preview.dataset.previewName || "Foto barang");
+    return;
+  }
+
+  if (e.target.closest("button")) return;
+  const row = e.target.closest("tr[data-master-row]");
+  if (row) openMasterDetail(row.dataset.masterRow);
+});
+
+// Klik foto dari area detail juga membuka tampilan foto ukuran besar.
+$("masterDetailContent").addEventListener("click", e => {
+  const preview = e.target.closest("[data-preview-src]");
+  if (preview) previewPhoto(preview.dataset.previewSrc, preview.dataset.previewName || "Foto barang");
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closePhotoPreview();
+});
 
 function openMasterModal(row=null) {
   $("masterForm").reset();
