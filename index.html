@@ -491,7 +491,7 @@ textarea{resize:vertical;min-height:75px}
             <div class="condition-picker-menu" id="mKondisiMenu"></div>
           </div>
         </div>
-        <div class="field"><label>Kategori</label><input id="mKategori" placeholder="Contoh: elektronik"></div>
+        <div class="field"><label>Kategori</label><select id="mKategori"><option value="">Pilih kategori</option></select></div>
         <div class="field"><label>Link Foto Google Drive</label><input id="mFoto" placeholder="https://drive.google.com/..."></div>
         <div class="field"><label>Saldo Awal KK</label><input id="mSaldoKK" type="number" min="0" value="0"></div>
         <div class="field"><label>Saldo Awal MBS</label><input id="mSaldoMBS" type="number" min="0" value="0"></div>
@@ -778,26 +778,70 @@ function renderOverview() {
    MASTER BARANG
    ===================================================== */
 function renderCategoryOptions() {
+
+  // Ambil kategori dari data Master Barang
+  const categories = [...new Set(
+    masterRows()
+      .map(x => String(x.r[6] || "").trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "id"));
+
+  // Dropdown filter kategori
   const select = $("masterCategory");
   const current = select.value;
-  const categories = [...new Set(masterRows().map(x => String(x.r[6] || "").trim()).filter(Boolean))];
-  select.innerHTML = `<option value="">Semua Kategori</option>` + categories.map(c =>
-    `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`
-  ).join("");
-  select.value = current;
 
-  // Daftar filter kondisi mengikuti nilai yang tersedia di data Master Barang.
-  const conditionSelect = $("masterCondition");
-  const currentCondition = conditionSelect.value;
-  const conditions = getConditionOptions();
-
-  conditionSelect.innerHTML =
-    `<option value="">Semua Kondisi</option>` +
-    conditions.map(c =>
+  select.innerHTML =
+    `<option value="">Semua Kategori</option>` +
+    categories.map(c =>
       `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`
     ).join("");
 
-  conditionSelect.value = conditions.includes(currentCondition) ? currentCondition : "";
+  select.value = categories.includes(current) ? current : "";
+
+  // Dropdown kategori pada form tambah/edit
+  const modalCategory = $("mKategori");
+
+  if (modalCategory) {
+
+    const currentModal = modalCategory.value;
+
+    const modalCategories = [...new Set([
+      ...categories,
+      ...(currentModal ? [currentModal] : [])
+    ])].sort((a, b) => a.localeCompare(b, "id"));
+
+    modalCategory.innerHTML =
+      `<option value="">Pilih kategori</option>` +
+      modalCategories.map(c =>
+        `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`
+      ).join("");
+
+    modalCategory.value = modalCategories.includes(currentModal)
+      ? currentModal
+      : "";
+
+  }
+
+  // Dropdown filter kondisi
+  const conditionSelect = $("masterCondition");
+
+  if (conditionSelect) {
+
+    const currentCondition = conditionSelect.value;
+    const conditions = getConditionOptions();
+
+    conditionSelect.innerHTML =
+      `<option value="">Semua Kondisi</option>` +
+      conditions.map(c =>
+        `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`
+      ).join("");
+
+    conditionSelect.value = conditions.includes(currentCondition)
+      ? currentCondition
+      : "";
+
+  }
+
 }
 
 /* =====================================================
@@ -830,8 +874,8 @@ let selectedMasterConditions = [];
 // Mendukung data lama tunggal dan data baru multi-kondisi.
 function conditionValues(value) {
   return String(value || "")
-    .split(/[,;\\n]+/)
-    .map(value => value.trim())
+    .split(/[,;\n]+/)
+    .map(x => x.trim())
     .filter(Boolean);
 }
 
@@ -1051,12 +1095,17 @@ document.addEventListener("keydown", e => {
 });
 
 function openMasterModal(row=null) {
+  renderCategoryOptions();
   $("masterForm").reset();
   $("masterRow").value = "";
   $("masterModalTitle").textContent = row ? "Edit Barang" : "Tambah Barang";
   $("masterSubmit").textContent = row ? "Simpan Perubahan" : "Simpan Barang";
   $("mSaldoKK").value = 0;
   $("mSaldoMBS").value = 0;
+  renderCategoryOptions();
+  $("mKategori").value = "";
+                                    
+                                    
 
   // Reset kondisi untuk form tambah barang.
   setConditionPicker("Baik");
