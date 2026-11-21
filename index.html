@@ -440,7 +440,7 @@ textarea{resize:vertical;min-height:75px}
       <div class="panel">
         <div class="toolbar">
           <div class="search"><i data-lucide="search"></i><input id="keluarSearch" placeholder="Cari barang..." oninput="renderTransactions('keluar')"></div>
-          <select id="keluarLocation" onchange="renderTransactions('keluar')"><option value="">Semua Lokasi</option><option>KK</option><option>MBS</option></select>
+          <select id="keluarLocation" onchange="renderTransactions('keluar')"><option value="">Semua Lokasi</option><option>KK</option><option>MBS</option><option value="Master">Master</option></select>
         </div>
         <div class="table-wrap"><table>
           <thead><tr><th>Tanggal</th><th>Nama Barang</th><th>Stok Awal</th><th>Jumlah Keluar</th><th>Stok Akhir</th><th>Lokasi</th><th>Aksi</th></tr></thead>
@@ -458,11 +458,11 @@ textarea{resize:vertical;min-height:75px}
       <div class="panel">
         <div class="toolbar">
           <div class="search"><i data-lucide="search"></i><input id="historySearch" placeholder="Cari nama barang..." oninput="renderHistory()"></div>
-          <select id="historyType" onchange="renderHistory()"><option value="">Semua Transaksi</option><option value="masuk">Stok Masuk</option><option value="keluar">Stok Keluar</option></select>
+          <select id="historyType" onchange="renderHistory()"><option value="">Semua Transaksi</option><option value="masuk">Stok Masuk</option><option value="keluar">Stok Keluar</option><option value="edit">Edit Master Barang</option></select>
           <select id="historyLocation" onchange="renderHistory()"><option value="">Semua Lokasi</option><option>KK</option><option>MBS</option></select>
         </div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Tanggal</th><th>Jenis</th><th>Nama Barang</th><th>Jumlah</th><th>Lokasi</th><th>Keterangan</th></tr></thead>
+          <thead><tr><th>Tanggal</th><th>Jenis</th><th>Nama Barang</th><th>Jumlah</th><th>Lokasi</th><th>Keterangan / Perubahan</th><th>Foto</th><th>Aksi</th></tr></thead>
           <tbody id="historyBody"></tbody>
         </table></div>
         <div class="pagination"><span id="historyCount">0 transaksi</span><span>Riwayat gabungan</span></div>
@@ -1133,6 +1133,27 @@ function editMaster(row) { openMasterModal(row); }
 $("masterForm").addEventListener("submit", async e => {
   e.preventDefault();
   const row = $("masterRow").value;
+  
+// Ambil data lama sebelum proses edit
+let beforeMasterEdit = null;
+
+if (row) {
+
+  const oldRow = db.master[Number(row) - 1];
+
+  if (oldRow) {
+
+    beforeMasterEdit = {
+      nama: oldRow[1] || "",
+      kondisi: oldRow[5] || "",
+      linkFoto: oldRow[8] || "",
+      keterangan: oldRow[9] || ""
+    };
+
+  }
+
+}
+
   const payload = {
     action:row ? "updateMaster" : "addMaster",
     ...(row ? {row:Number(row)} : {}),
@@ -1145,7 +1166,31 @@ $("masterForm").addEventListener("submit", async e => {
     saldoAwalKK:Number($("mSaldoKK").value)||0,
     saldoAwalMBS:Number($("mSaldoMBS").value)||0
   };
-  await submitAction(payload,"masterSubmit","Menyimpan...");
+  
+const saveResult = await submitAction(
+  payload,
+  "masterSubmit",
+  "Menyimpan..."
+);
+
+// Catat perubahan jika sedang mengedit barang
+// dan proses penyimpanan tidak mengembalikan false.
+if (saveResult !== false && beforeMasterEdit) {
+
+  recordMasterEditHistory(beforeMasterEdit, {
+    nama: payload.nama,
+    kondisi: payload.kondisi,
+    linkFoto: payload.linkFoto,
+    keterangan: payload.keterangan
+  });
+
+  // Refresh riwayat jika halaman sedang dibuka
+  if ($("page-riwayat").classList.contains("active")) {
+    renderHistory();
+  }
+
+}
+
   closeModal("masterModal");
 });
 
@@ -1257,29 +1302,401 @@ async function removeTransaction(type,row) {
 /* =====================================================
    RIWAYAT
    ===================================================== */
+
+  
+/* =====================================================
+   RIWAYAT EDIT MASTER BARANG
+   Terpisah dari riwayat transaksi stok
+   Penyimpanan menggunakan localStorage
+   ===================================================== */
+
+const MASTER_EDIT_HISTORY_KEY = "inventory_master_edit_history_v1";
+
+// Mengambil riwayat edit
+function getMasterEditHistory() {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(MASTER_EDIT_HISTORY_KEY) || "[]"
+    );
+
+    return Array.isArray(data) ? data : [];
+
+  } catch (error) {
+    console.error("Gagal membaca riwayat edit:", error);
+    return [];
+  }
+}
+
+// Menyimpan riwayat edit
+function saveMasterEditHistory(history) {
+  try {
+    localStorage.setItem(
+      MASTER_EDIT_HISTORY_KEY,
+      JSON.stringify(history)
+    );
+
+    return true;
+
+  } catch (error) {
+    console.error("Gagal menyimpan riwayat edit:", error);
+    notify("Riwayat edit gagal disimpan.");
+    return false;
+  }
+}
+
+// Mencatat perubahan Master Barang
+function recordMasterEditHistory(before, after) {
+
+  const fields = [
+    {
+      key: "kondisi",
+      label: "Kondisi",
+      oldValue: before.kondisi,
+      newValue: after.kondisi
+    },
+    {
+      key: "linkFoto",
+      label: "Link Foto Google Drive",
+      oldValue: before.linkFoto,
+      newValue: after.linkFoto
+    },
+    {
+      key: "keterangan",
+      label: "Keterangan",
+      oldValue: before.keterangan,
+      newValue: after.keterangan
+    }
+  ];
+
+  const changes = fields
+    .filter(field =>
+      String(field.oldValue || "") !==
+      String(field.newValue || "")
+    )
+    .map(field => ({
+      key: field.key,
+      label: field.label,
+      oldValue: String(field.oldValue || ""),
+      newValue: String(field.newValue || "")
+    }));
+
+  // Tidak mencatat jika tidak ada perubahan
+  if (!changes.length) return;
+
+  const history = getMasterEditHistory();
+
+  history.unshift({
+    id: "edit-" + Date.now() + "-" +
+      Math.random().toString(36).slice(2, 8),
+
+    date: new Date().toISOString(),
+
+    type: "edit",
+
+    name: after.nama || before.nama || "",
+
+    changes: changes,
+
+    photoUrl: after.linkFoto || "",
+
+    description: after.keterangan || ""
+  });
+
+  saveMasterEditHistory(history);
+}
+
+// Menghapus riwayat edit saja
+function deleteMasterEditHistory(id) {
+
+  const history = getMasterEditHistory();
+
+  const exists = history.some(item => item.id === id);
+
+  if (!exists) return;
+
+  if (!confirm(
+    "Apakah kamu yakin ingin menghapus riwayat edit ini?"
+  )) return;
+
+  const updated = history.filter(
+    item => item.id !== id
+  );
+
+  if (saveMasterEditHistory(updated)) {
+    notify("Riwayat edit berhasil dihapus.");
+    renderHistory();
+  }
+}
+
+// Memastikan link hanya menggunakan HTTP/HTTPS
+function validHistoryUrl(value) {
+  try {
+    const url = new URL(String(value || "").trim());
+
+    if (
+      url.protocol === "https:" ||
+      url.protocol === "http:"
+    ) {
+      return url.href;
+    }
+
+    return "";
+
+  } catch (error) {
+    return "";
+  }
+}
+
+
+/* =====================================================
+   RENDER RIWAYAT GABUNGAN
+   TRANSAKSI STOK + EDIT MASTER
+   ===================================================== */
+
 function renderHistory() {
+
   const q = $("historySearch").value.trim().toLowerCase();
   const type = $("historyType").value;
   const loc = $("historyLocation").value;
 
-  // Gabungkan data Stok Masuk dan Stok Keluar
-  const allTransactions = [
+  // Riwayat transaksi stok dari sistem lama
+  const transactionHistory = [
     ...transactionRows("masuk"),
     ...transactionRows("keluar")
+  ].map(item => ({
+    historyType: item.type,
+    date: item.r[0],
+    name: item.r[1],
+    quantity: item.r[3],
+    location: item.r[5],
+    description: item.r[6]
+  }));
+
+  // Riwayat edit Master Barang
+  const editHistory = getMasterEditHistory().map(item => ({
+    ...item,
+    historyType: "edit",
+    location: "Master"
+  }));
+
+  // Gabungkan kedua riwayat
+  const allHistory = [
+    ...transactionHistory,
+    ...editHistory
   ];
 
-  // Filter berdasarkan nama barang, jenis, dan lokasi
-  const rows = allTransactions
-    .filter(({ r, type: transactionType }) => {
-      const namaBarang = String(r[1] || "").toLowerCase();
-      const lokasi = String(r[5] || "").trim();
+  // Filter pencarian
+  const rows = allHistory
+    .filter(item => {
+
+      const name = String(item.name || "").toLowerCase();
 
       return (
-        namaBarang.includes(q) &&
-        (!type || transactionType === type) &&
-        (!loc || lokasi === loc)
+        name.includes(q) &&
+        (!type || item.historyType === type) &&
+        (!loc || String(item.location || "") === loc)
       );
+
     })
+    .sort((a, b) =>
+      new Date(b.date) - new Date(a.date)
+    );
+
+  // Tampilkan data
+  $("historyBody").innerHTML = rows.length
+
+    ? rows.map(item => {
+
+        // =====================================
+        // RIWAYAT EDIT MASTER BARANG
+        // =====================================
+
+        if (item.historyType === "edit") {
+
+          const changesHTML = (item.changes || [])
+            .map(change => {
+
+              const label = escapeHTML(change.label || "");
+              const oldValue = escapeHTML(change.oldValue || "-");
+              const newValue = escapeHTML(change.newValue || "-");
+
+              if (change.key === "linkFoto") {
+
+                const oldUrl = validHistoryUrl(change.oldValue);
+                const newUrl = validHistoryUrl(change.newValue);
+
+                return `
+                  <div style="margin-bottom:7px">
+                    <strong>${label}</strong><br>
+
+                    ${oldUrl
+                      ? `<a href="${escapeHTML(oldUrl)}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                           Foto sebelumnya
+                         </a>`
+                      : `Foto sebelumnya: ${oldValue}`
+                    }
+
+                    <br>
+
+                    ${newUrl
+                      ? `<a href="${escapeHTML(newUrl)}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                           Foto terbaru
+                         </a>`
+                      : `Foto terbaru: ${newValue}`
+                    }
+                  </div>
+                `;
+              }
+
+              return `
+                <div style="margin-bottom:7px">
+                  <strong>${label}:</strong><br>
+                  <span style="color:var(--muted)">
+                    ${oldValue}
+                  </span>
+                  →
+                  <strong>${newValue}</strong>
+                </div>
+              `;
+
+            }).join("");
+
+          const photoUrl = validHistoryUrl(item.photoUrl);
+
+          const photoHTML = photoUrl
+            ? `
+              <a href="${escapeHTML(photoUrl)}"
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 class="detail-link">
+                <i data-lucide="external-link"></i>
+                Buka Foto
+              </a>
+            `
+            : "-";
+
+          return `
+            <tr>
+
+              <td>${dateDisplay(item.date)}</td>
+
+              <td>
+                <span class="badge"
+                  style="background:#eee7f7;color:#765b9b">
+                  Edit Master
+                </span>
+              </td>
+
+              <td>
+                <strong>${escapeHTML(item.name || "-")}</strong>
+              </td>
+
+              <td>-</td>
+
+              <td>Master</td>
+
+              <td style="min-width:220px;white-space:normal">
+                ${changesHTML}
+
+                ${item.description
+                  ? `
+                    <div style="margin-top:7px">
+                      <strong>Keterangan terbaru:</strong><br>
+                      ${escapeHTML(item.description)}
+                    </div>
+                  `
+                  : ""
+                }
+              </td>
+
+              <td>${photoHTML}</td>
+
+              <td>
+                <button
+                  class="icon-btn"
+                  type="button"
+                  title="Hapus riwayat edit"
+                  onclick="deleteMasterEditHistory('${escapeHTML(item.id)}')">
+
+                  <i data-lucide="trash-2"></i>
+
+                </button>
+              </td>
+
+            </tr>
+          `;
+
+        }
+
+        // =====================================
+        // RIWAYAT STOK MASUK DAN KELUAR
+        // TETAP TIDAK BISA DIHAPUS
+        // =====================================
+
+        return `
+          <tr>
+
+            <td>${dateDisplay(item.date)}</td>
+
+            <td>
+              <span class="badge ${
+                item.historyType === "masuk"
+                  ? "good"
+                  : "warn"
+              }">
+                ${item.historyType === "masuk"
+                  ? "Masuk"
+                  : "Keluar"
+                }
+              </span>
+            </td>
+
+            <td>
+              <strong>${escapeHTML(item.name || "-")}</strong>
+            </td>
+
+            <td>
+              ${item.historyType === "masuk" ? "+" : "-"}${fmt(item.quantity)}
+            </td>
+
+            <td>${escapeHTML(item.location || "-")}</td>
+
+            <td>${escapeHTML(item.description || "-")}</td>
+
+            <td>-</td>
+
+            <td>
+              <span style="font-size:10px;color:var(--muted)">
+                Tidak dapat dihapus
+              </span>
+            </td>
+
+          </tr>
+        `;
+
+      }).join("")
+
+    : `
+      <tr>
+        <td colspan="8" class="empty">
+          Belum ada riwayat.
+        </td>
+      </tr>
+    `;
+
+  // Jumlah riwayat
+  $("historyCount").textContent =
+    rows.length + " riwayat";
+
+  // Refresh ikon
+  refreshIcons();
+
+}
+
 
     // Urutkan tanggal terbaru ke terlama
     .sort((a, b) => {
