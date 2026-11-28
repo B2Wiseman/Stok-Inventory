@@ -295,6 +295,44 @@ textarea{resize:vertical;min-height:75px}
 .history-master-row{background:#fffaf6}
 .history-master-row:hover{background:#fff3ec}
 
+/* OVERVIEW ONLY: rekap kategori/satuan dan kondisi persediaan */
+.overview-category-panel{min-width:0}
+.overview-table-wrap{width:100%;overflow-x:auto}
+.overview-stock-table{min-width:490px;white-space:nowrap}
+.overview-stock-table th{padding:11px 10px}
+.overview-stock-table td{padding:12px 10px}
+.overview-stock-table .number-cell{text-align:right}
+.overview-stock-table tfoot td{font-weight:700;background:#fff8f2;border-top:1px solid var(--line);border-bottom:0}
+.overview-stock-table .category-name{font-weight:600;color:var(--text)}
+.overview-stock-table .unit-name{color:var(--muted);text-transform:lowercase}
+.overview-condition-panel{margin-top:18px}
+.overview-condition-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.overview-condition-card{width:100%;border:1px solid var(--line);border-radius:13px;background:#fffaf6;padding:13px 14px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--text);transition:background .18s,border-color .18s,transform .18s}
+.overview-condition-card:hover{background:#fff4ed;border-color:#e8c9ba;transform:translateY(-1px)}
+.overview-condition-card:focus-visible{outline:3px solid rgba(220,160,140,.28);outline-offset:2px}
+.overview-condition-card-main{display:flex;align-items:center;gap:9px;min-width:0}
+.overview-condition-dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+.overview-condition-name{font-size:12px;font-weight:600;overflow-wrap:anywhere}
+.overview-condition-count{font-size:12px;font-weight:700;color:#786963;white-space:nowrap}
+.overview-condition-chevron{width:14px;height:14px;color:#b09a8e;flex:0 0 auto}
+.overview-condition-backdrop{display:none;position:fixed;inset:0;z-index:70;background:rgba(48,35,30,.38);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:18px}
+.overview-condition-backdrop.show{display:flex}
+.overview-condition-modal{width:min(560px,100%);max-height:min( min(78vh,720px), calc(100vh - 36px));overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:21px;padding:21px;box-shadow:0 20px 80px rgba(50,30,20,.2);animation:fade .2s ease}
+.overview-condition-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:15px}
+.overview-condition-modal-head h2{font:600 22px 'Playfair Display',serif;margin:0}
+.overview-condition-modal-head p{font-size:11px;color:var(--muted);margin:5px 0 0}
+.overview-condition-list{display:flex;flex-direction:column;gap:8px}
+.overview-condition-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fffaf6}
+.overview-condition-item-info{min-width:0;flex:1}
+.overview-condition-item-name{font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.overview-condition-item-meta{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5}
+.overview-condition-item-stock{font-size:11px;font-weight:700;text-align:right;white-space:nowrap}
+.overview-condition-item-stock small{display:block;font-size:9px;color:var(--muted);font-weight:500;margin-top:3px}
+.overview-condition-modal-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
+.overview-condition-modal-foot span{font-size:11px;color:var(--muted)}
+@media(max-width:720px){.overview-condition-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-condition-modal{padding:17px}}
+@media(max-width:390px){.overview-condition-grid{grid-template-columns:1fr}}
+
 @media(max-width:1000px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .layout{padding:22px 3%}
@@ -401,22 +439,45 @@ textarea{resize:vertical;min-height:75px}
       </div>
 
       <div class="grid-two">
-        <div class="panel">
-          <div class="panel-head"><div><h3>Distribusi Stok</h3><div class="panel-sub">Perbandingan jumlah stok berdasarkan lokasi</div></div></div>
-          <div class="location-bars">
+        <div class="panel overview-category-panel">
+          <div class="panel-head">
             <div>
-              <div class="bar-label"><span>KK</span><strong id="labelKK">0</strong></div>
-              <div class="bar-track"><div class="bar-fill" id="barKK" style="width:0%"></div></div>
+              <h3>Rekap Stok Barang</h3>
+              <div class="panel-sub">Jumlah stok berdasarkan kategori dan satuan</div>
             </div>
-            <div>
-              <div class="bar-label"><span>MBS</span><strong id="labelMBS">0</strong></div>
-              <div class="bar-track"><div class="bar-fill alt" id="barMBS" style="width:0%"></div></div>
-            </div>
+          </div>
+          <div class="overview-table-wrap">
+            <table class="overview-stock-table">
+              <thead>
+                <tr>
+                  <th>Kategori</th>
+                  <th>Satuan</th>
+                  <th class="number-cell">KK</th>
+                  <th class="number-cell">MBS</th>
+                  <th class="number-cell">Total</th>
+                </tr>
+              </thead>
+              <tbody id="overviewCategoryBody">
+                <tr><td colspan="5" class="empty">Memuat data stok...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="panel">
           <div class="panel-head"><div><h3>Aktivitas Terbaru</h3><div class="panel-sub">Transaksi terakhir yang tercatat</div></div></div>
           <div class="activity-list" id="recentActivity"><div class="empty">Belum ada aktivitas transaksi.</div></div>
+        </div>
+      </div>
+
+      <div class="panel overview-condition-panel">
+        <div class="panel-head">
+          <div>
+            <h3>Kondisi Persediaan</h3>
+            <div class="panel-sub">Pilih kondisi untuk melihat daftar barang terkait</div>
+          </div>
+        </div>
+        <div class="overview-condition-grid" id="overviewConditionCards">
+          <div class="empty">Memuat kondisi barang...</div>
         </div>
       </div>
       <div class="footer">Inventory Management · Connected to Google Sheets</div>
@@ -594,6 +655,24 @@ textarea{resize:vertical;min-height:75px}
 <div class="photo-lightbox" id="photoLightbox" onclick="if(event.target===this)closePhotoPreview()">
   <button class="close" onclick="closePhotoPreview()" aria-label="Tutup foto"><i data-lucide="x"></i></button>
   <img id="photoLightboxImage" src="" alt="Foto barang diperbesar">
+</div>
+
+<!-- POPUP KONDISI PERSEDIAAN: KHUSUS OVERVIEW -->
+<div class="overview-condition-backdrop" id="overviewConditionModal" onclick="if(event.target===this)closeOverviewConditionModal()">
+  <section class="overview-condition-modal" role="dialog" aria-modal="true" aria-labelledby="overviewConditionTitle">
+    <div class="overview-condition-modal-head">
+      <div>
+        <h2 id="overviewConditionTitle">Daftar Barang</h2>
+        <p id="overviewConditionSubtitle">Barang berdasarkan kondisi terpilih</p>
+      </div>
+      <button type="button" class="close" onclick="closeOverviewConditionModal()" aria-label="Tutup"><i data-lucide="x"></i></button>
+    </div>
+    <div class="overview-condition-list" id="overviewConditionList"></div>
+    <div class="overview-condition-modal-foot">
+      <span id="overviewConditionCount"></span>
+      <button type="button" class="btn btn-soft" onclick="closeOverviewConditionModal()">Tutup</button>
+    </div>
+  </section>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -968,19 +1047,71 @@ function renderOverview() {
   const items = masterRows();
   const totalKK = items.reduce((sum,x) => sum + number(x.r[2]),0);
   const totalMBS = items.reduce((sum,x) => sum + number(x.r[3]),0);
-  const attention = items.filter(x => String(x.r[5]).toLowerCase().includes("rusak")).length;
+  const attention = items.filter(x => conditionValues(x.r[5]).some(c => c.toLowerCase().includes("rusak"))).length;
 
   $("statItems").textContent = fmt(items.length);
   $("statKK").textContent = fmt(totalKK);
   $("statMBS").textContent = fmt(totalMBS);
   $("statAttention").textContent = fmt(attention);
 
-  $("labelKK").textContent = fmt(totalKK);
-  $("labelMBS").textContent = fmt(totalMBS);
+  // Rekap stok dikelompokkan berdasarkan kombinasi kategori + satuan.
+  // Satuan berbeda tidak digabung agar angka tidak tercampur.
+  const grouped = new Map();
+  items.forEach(({r}) => {
+    const category = String(r[6] || "Tanpa Kategori").trim() || "Tanpa Kategori";
+    const unit = String(r[4] || "-").trim() || "-";
+    const key = JSON.stringify([category.toLowerCase(), unit.toLowerCase()]);
+    if (!grouped.has(key)) {
+      grouped.set(key, {category, unit, kk:0, mbs:0});
+    }
+    const entry = grouped.get(key);
+    entry.kk += number(r[2]);
+    entry.mbs += number(r[3]);
+  });
 
-  const max = Math.max(totalKK,totalMBS,1);
-  $("barKK").style.width = (totalKK/max*100) + "%";
-  $("barMBS").style.width = (totalMBS/max*100) + "%";
+  const groupedRows = [...grouped.values()].sort((a,b) =>
+    a.category.localeCompare(b.category, "id") || a.unit.localeCompare(b.unit, "id")
+  );
+  const categoryBody = $("overviewCategoryBody");
+
+  categoryBody.innerHTML = groupedRows.length ? groupedRows.map(item => `
+    <tr>
+      <td class="category-name">${escapeHTML(item.category)}</td>
+      <td class="unit-name">${escapeHTML(item.unit)}</td>
+      <td class="number-cell">${fmt(item.kk)}</td>
+      <td class="number-cell">${fmt(item.mbs)}</td>
+      <td class="number-cell"><strong>${fmt(item.kk + item.mbs)}</strong></td>
+    </tr>
+  `).join("") : `<tr><td colspan="5" class="empty">Belum ada data barang.</td></tr>`;
+
+
+  // Ringkasan kondisi menghitung jenis barang yang memiliki label tersebut,
+  // bukan jumlah unit per kondisi karena spreadsheet tidak menyimpan rincian itu.
+  const conditionDefinitions = [
+    {label:"Baik", match:["baik"], color:"#6f9e70", bg:"#e5f0e2"},
+    {label:"Rusak Ringan", match:["rusak ringan"], color:"#b48a35", bg:"#f8efcf"},
+    {label:"Rusak Berat", match:["rusak berat"], color:"#c94f49", bg:"#f8e4e1"},
+    {label:"Hilang", match:["hilang"], color:"#b96b70", bg:"#f8e6e7"},
+    {label:"Sedang Perbaikan", match:["sedang perbaikan"], color:"#5686b4", bg:"#e5eff8"},
+    {label:"Kosong", match:["habis","kosong"], color:"#88827d", bg:"#eeecea"}
+  ];
+
+  const conditionCards = $("overviewConditionCards");
+  conditionCards.innerHTML = conditionDefinitions.map(definition => {
+    const count = items.filter(({r}) =>
+      conditionValues(r[5]).some(value => definition.match.includes(value.trim().toLowerCase()))
+    ).length;
+    return `
+      <button type="button" class="overview-condition-card" data-condition="${escapeHTML(definition.label)}">
+        <span class="overview-condition-card-main">
+          <span class="overview-condition-dot" style="background:${definition.color}"></span>
+          <span class="overview-condition-name">${escapeHTML(definition.label)}</span>
+        </span>
+        <span class="overview-condition-count">${fmt(count)} barang</span>
+        <i class="overview-condition-chevron" data-lucide="chevron-right"></i>
+      </button>
+    `;
+  }).join("");
 
   const activities = [
     ...transactionRows("masuk"),
@@ -997,7 +1128,57 @@ function renderOverview() {
       <strong>${x.type === "masuk" ? "+" : "-"}${fmt(x.r[3])}</strong>
     </div>
   `).join("") : `<div class="empty">Belum ada aktivitas transaksi.</div>`;
+
+  refreshIcons();
 }
+
+function openOverviewCondition(condition) {
+  const aliases = {
+    "Baik":["baik"],
+    "Rusak Ringan":["rusak ringan"],
+    "Rusak Berat":["rusak berat"],
+    "Hilang":["hilang"],
+    "Sedang Perbaikan":["sedang perbaikan"],
+    "Kosong":["habis","kosong"]
+  };
+  const accepted = aliases[condition] || [String(condition).toLowerCase()];
+  const matches = masterRows().filter(({r}) =>
+    conditionValues(r[5]).some(value => accepted.includes(value.trim().toLowerCase()))
+  ).sort((a,b) => String(a.r[1]).localeCompare(String(b.r[1]), "id"));
+
+  $("overviewConditionTitle").textContent = "Barang dengan Kondisi " + condition;
+  $("overviewConditionSubtitle").textContent = "Daftar barang yang memiliki label kondisi " + condition.toLowerCase();
+  $("overviewConditionCount").textContent = matches.length + " jenis barang";
+
+  $("overviewConditionList").innerHTML = matches.length ? matches.map(({r}) => `
+    <div class="overview-condition-item">
+      <div class="overview-condition-item-info">
+        <div class="overview-condition-item-name">${escapeHTML(r[1] || "Tanpa Nama")}</div>
+        <div class="overview-condition-item-meta">
+          ${escapeHTML(r[6] || "Tanpa kategori")} · ${escapeHTML(r[4] || "-")}<br>
+          Kondisi: ${conditionValues(r[5]).map(condition => escapeHTML(condition.trim().toLowerCase() === "habis" ? "Kosong" : condition)).join(", " ) || "-"}
+        </div>
+      </div>
+      <div class="overview-condition-item-stock">
+        KK ${fmt(r[2])} · MBS ${fmt(r[3])}
+        <small>Total ${fmt(number(r[2]) + number(r[3]))} ${escapeHTML(r[4] || "unit")}</small>
+      </div>
+    </div>
+  `).join("") : `<div class="empty">Tidak ada barang dengan kondisi ${escapeHTML(condition.toLowerCase())}.</div>`;
+
+  $("overviewConditionModal").classList.add("show");
+  refreshIcons();
+}
+
+function closeOverviewConditionModal() {
+  $("overviewConditionModal").classList.remove("show");
+}
+
+$("overviewConditionCards").addEventListener("click", event => {
+  const card = event.target.closest("[data-condition]");
+  if (card) openOverviewCondition(card.dataset.condition);
+});
+
 
 /* =====================================================
    MASTER BARANG
